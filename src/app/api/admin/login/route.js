@@ -3,13 +3,13 @@ import jwt from 'jsonwebtoken';
 
 export async function POST(request) {
   try {
-    const { password } = await request.json();
+    const { email, password } = await request.json();
 
-    if (password !== process.env.ADMIN_PASSWORD) {
-      return NextResponse.json({ success: false, error: 'Invalid password' }, { status: 401 });
+    if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
+      return NextResponse.json({ success: false, error: 'Invalid email or password' }, { status: 401 });
     }
 
-    const token = jwt.sign({ role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ role: 'admin', email }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
     return NextResponse.json({ success: true, token });
   } catch (error) {
