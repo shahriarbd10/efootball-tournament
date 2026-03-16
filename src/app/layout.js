@@ -15,10 +15,9 @@ export default function RootLayout({ children }) {
         <main>{children}</main>
         <footer className="footer">
           <p className="footer-text">
-            ⚽ eFootball Tournament Cup 2026 — Built with 🔥 for competitive gaming
+            eFootball Tournament Cup 2026 — Built for competitive gaming
           </p>
         </footer>
-        {/* Subtle particle background */}
         <div className="particles-bg" aria-hidden="true">
           {Array.from({ length: 15 }).map((_, i) => (
             <span

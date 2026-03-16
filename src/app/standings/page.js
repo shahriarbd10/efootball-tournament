@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { IoStatsChart, IoCheckmarkCircle, IoShield, IoTrendingUp, IoTrendingDown } from 'react-icons/io5';
 
 export default function StandingsPage() {
   const [standings, setStandings] = useState(null);
@@ -40,7 +41,7 @@ export default function StandingsPage() {
   const renderTable = (groupData, groupLabel, groupClass) => (
     <div style={{ marginBottom: '2rem' }}>
       <div className="section-header">
-        <span className="section-icon">{groupLabel === 'Group A' ? '🔵' : '🟣'}</span>
+        <span className="section-icon"><IoShield /></span>
         <span className="section-title">{groupLabel}</span>
         <span className={`badge ${groupClass}`} style={{ marginLeft: '0.5rem' }}>{groupLabel}</span>
         <div className="section-divider"></div>
@@ -72,7 +73,7 @@ export default function StandingsPage() {
                 </td>
                 <td className="player-name" style={i < 2 ? { color: 'var(--accent-primary)' } : {}}>
                   {row.player}
-                  {i < 2 && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', opacity: 0.7 }}>✓ Q</span>}
+                  {i < 2 && <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', opacity: 0.8 }}><IoCheckmarkCircle style={{ verticalAlign: 'middle' }} /></span>}
                 </td>
                 <td>{row.played}</td>
                 <td>{row.won}</td>
@@ -95,7 +96,7 @@ export default function StandingsPage() {
   return (
     <div className="container">
       <div className="page-header">
-        <h1 className="page-title">📊 Group Standings</h1>
+        <h1 className="page-title"><IoStatsChart style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />Group Standings</h1>
         <p className="page-subtitle">
           Top 2 from each group qualify for the knockout stage
         </p>
@@ -107,11 +108,11 @@ export default function StandingsPage() {
           {renderTable(standings.B, 'Group B', 'badge-group-b')}
 
           <div className="card" style={{ textAlign: 'center', padding: '1.5rem' }}>
-            <div style={{ fontFamily: 'Rajdhani, sans-serif', fontWeight: '600', color: 'var(--text-secondary)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.5rem' }}>
+            <div className="card-label" style={{ marginBottom: '0.5rem' }}>
               Qualification Rule
             </div>
-            <div style={{ color: 'var(--text-primary)', fontFamily: 'Rajdhani, sans-serif', fontSize: '1rem', fontWeight: '500' }}>
-              🏅 Top 2 from each group advance • Tiebreakers: Goal Difference → Goals Scored → Head-to-Head
+            <div style={{ color: 'var(--text-primary)', fontFamily: 'Rajdhani, sans-serif', fontSize: '1rem', fontWeight: '500', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <IoTrendingUp style={{ color: 'var(--accent-primary)' }} /> Top 2 from each group advance &middot; Tiebreakers: Goal Difference → Goals Scored → Head-to-Head
             </div>
           </div>
         </>

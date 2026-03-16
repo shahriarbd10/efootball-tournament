@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { IoSettings, IoLogOut, IoSave, IoRefresh, IoTime, IoFlame, IoTrophy, IoWarning } from 'react-icons/io5';
 
 export default function AdminDashboard() {
   const [matches, setMatches] = useState([]);
@@ -85,7 +86,7 @@ export default function AdminDashboard() {
       const data = await res.json();
 
       if (data.success) {
-        showToast(`Match ${match.matchNumber} updated successfully! ✅`);
+        showToast(`Match ${match.matchNumber} updated successfully!`);
       } else {
         showToast(`Failed to update match ${match.matchNumber}`, 'error');
       }
@@ -101,7 +102,7 @@ export default function AdminDashboard() {
       const data = await res.json();
 
       if (data.success) {
-        showToast('Tournament data seeded successfully! 🎉');
+        showToast('Tournament data seeded successfully!');
         fetchMatches();
       } else {
         showToast('Failed to seed data', 'error');
@@ -124,8 +125,8 @@ export default function AdminDashboard() {
         ? <span className="badge badge-group-a">Group A</span>
         : <span className="badge badge-group-b">Group B</span>;
     }
-    if (match.stage === 'semifinal') return <span className="badge badge-knockout">Semifinal</span>;
-    return <span className="badge badge-knockout">🏆 Final</span>;
+    if (match.stage === 'semifinal') return <span className="badge badge-knockout"><IoFlame style={{ fontSize: '10px' }} /> Semifinal</span>;
+    return <span className="badge badge-knockout"><IoTrophy style={{ fontSize: '10px' }} /> Final</span>;
   };
 
   if (loading) {
@@ -142,26 +143,29 @@ export default function AdminDashboard() {
   return (
     <div className="container">
       <div className="page-header">
-        <h1 className="page-title">⚙️ Admin Dashboard</h1>
+        <h1 className="page-title"><IoSettings style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />Admin Dashboard</h1>
         <p className="page-subtitle">
           Manage match scores, status, and player names
         </p>
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '0.75rem' }}>
           <button onClick={handleLogout} className="btn btn-secondary btn-sm">
-            🚪 Logout
+            <IoLogOut /> Logout
           </button>
         </div>
       </div>
 
       {/* Seed Section */}
       <div className="seed-section">
-        <p>⚠️ Click below to seed/reset all tournament data. This will delete existing data and create fresh matches.</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+          <IoWarning style={{ color: 'var(--accent-warning)', fontSize: '1.1rem' }} />
+          <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Click below to seed/reset all tournament data. This will delete existing data and create fresh matches.</span>
+        </div>
         <button
           onClick={handleSeed}
           className="btn btn-danger"
           disabled={seeding}
         >
-          {seeding ? '⏳ Seeding...' : '🌱 Seed Tournament Data'}
+          <IoRefresh /> {seeding ? 'Seeding...' : 'Seed Tournament Data'}
         </button>
       </div>
 
@@ -174,11 +178,12 @@ export default function AdminDashboard() {
                 <span className="match-number">Match {match.matchNumber}</span>
                 {getStageBadge(match)}
               </div>
-              <span className="match-time">⏱ {match.timeSlot}</span>
+              <span className="match-time" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <IoTime style={{ fontSize: '0.75rem' }} /> {match.timeSlot}
+              </span>
             </div>
 
             <div className="admin-match-body">
-              {/* Player 1 */}
               <div className="admin-player-section">
                 <input
                   type="text"
@@ -189,7 +194,6 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              {/* Score */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <input
                   type="number"
@@ -208,7 +212,6 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              {/* Player 2 */}
               <div className="admin-player-section">
                 <input
                   type="text"
@@ -226,16 +229,16 @@ export default function AdminDashboard() {
                 value={match.status}
                 onChange={(e) => handleStatusChange(match.matchNumber, e.target.value)}
               >
-                <option value="upcoming">⏳ Upcoming</option>
-                <option value="live">🔴 Live</option>
-                <option value="completed">✅ Completed</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="live">Live</option>
+                <option value="completed">Completed</option>
               </select>
 
               <button
                 onClick={() => saveMatch(match)}
                 className="btn btn-primary btn-sm"
               >
-                💾 Save
+                <IoSave /> Save
               </button>
             </div>
           </div>

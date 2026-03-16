@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { IoCalendar, IoTime, IoEllipse, IoCheckmarkCircle, IoHourglass, IoFlame, IoTrophy, IoFunnel } from 'react-icons/io5';
 
 export default function FixturesPage() {
   const [matches, setMatches] = useState([]);
@@ -23,7 +24,7 @@ export default function FixturesPage() {
 
   useEffect(() => {
     fetchMatches();
-    const interval = setInterval(fetchMatches, 10000); // Auto-refresh every 10s
+    const interval = setInterval(fetchMatches, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -38,11 +39,11 @@ export default function FixturesPage() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'live':
-        return <span className="badge badge-live">🔴 Live</span>;
+        return <span className="badge badge-live"><IoEllipse style={{ fontSize: '6px' }} /> Live</span>;
       case 'completed':
-        return <span className="badge badge-completed">✅ Completed</span>;
+        return <span className="badge badge-completed"><IoCheckmarkCircle style={{ fontSize: '10px' }} /> Completed</span>;
       default:
-        return <span className="badge badge-upcoming">⏳ Upcoming</span>;
+        return <span className="badge badge-upcoming"><IoHourglass style={{ fontSize: '10px' }} /> Upcoming</span>;
     }
   };
 
@@ -52,8 +53,8 @@ export default function FixturesPage() {
         ? <span className="badge badge-group-a">Group A</span>
         : <span className="badge badge-group-b">Group B</span>;
     }
-    if (match.stage === 'semifinal') return <span className="badge badge-knockout">🔥 Semifinal</span>;
-    return <span className="badge badge-knockout">🏆 Final</span>;
+    if (match.stage === 'semifinal') return <span className="badge badge-knockout"><IoFlame style={{ fontSize: '10px' }} /> Semifinal</span>;
+    return <span className="badge badge-knockout"><IoTrophy style={{ fontSize: '10px' }} /> Final</span>;
   };
 
   const getScoreClass = (match, playerNum) => {
@@ -80,7 +81,7 @@ export default function FixturesPage() {
   return (
     <div className="container">
       <div className="page-header">
-        <h1 className="page-title">📋 Match Fixtures</h1>
+        <h1 className="page-title"><IoCalendar style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />Match Fixtures</h1>
         <p className="page-subtitle">
           All 9 tournament matches — auto-refreshing every 10 seconds
         </p>
@@ -92,10 +93,9 @@ export default function FixturesPage() {
         )}
       </div>
 
-      {/* Tab Navigation */}
       <div className="tab-nav">
         <button className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>
-          All Matches
+          <IoFunnel style={{ fontSize: '0.8rem' }} /> All Matches
         </button>
         <button className={`tab-btn ${activeTab === 'groupA' ? 'active' : ''}`} onClick={() => setActiveTab('groupA')}>
           Group A
@@ -104,25 +104,22 @@ export default function FixturesPage() {
           Group B
         </button>
         <button className={`tab-btn ${activeTab === 'knockout' ? 'active' : ''}`} onClick={() => setActiveTab('knockout')}>
-          Knockout
+          <IoFlame style={{ fontSize: '0.8rem' }} /> Knockout
         </button>
       </div>
 
-      {/* Match Cards */}
       <div className="matches-grid">
         {filteredMatches.map((match) => (
-          <div key={match._id} className={`match-card ${match.status === 'live' ? 'match-card-live' : ''}`}
+          <div key={match._id} className="match-card"
             style={match.status === 'live' ? { borderColor: 'rgba(239, 68, 68, 0.4)', boxShadow: '0 0 20px rgba(239, 68, 68, 0.15)' } : {}}>
-            {/* Header */}
             <div className="match-card-header">
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <span className="match-number">Match {match.matchNumber}</span>
                 {getStageBadge(match)}
               </div>
-              <span className="match-time">⏱ {match.timeSlot}</span>
+              <span className="match-time"><IoTime style={{ fontSize: '0.75rem', verticalAlign: 'middle' }} /> {match.timeSlot}</span>
             </div>
 
-            {/* Body */}
             <div className="match-body">
               <div className="match-player">
                 <div className={`match-player-name ${getScoreClass(match, 1)}`}>
@@ -147,7 +144,6 @@ export default function FixturesPage() {
               </div>
             </div>
 
-            {/* Footer */}
             <div className="match-card-footer">
               {getStatusBadge(match.status)}
             </div>

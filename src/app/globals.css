@@ -1427,3 +1427,67 @@ select.form-input {
     opacity: 0;
   }
 }
+
+/* ======= UTILITY CLASSES ======= */
+.navbar-link-icon {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: 0.25rem;
+  font-size: 1rem;
+}
+
+.navbar-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.card-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.card-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.bracket-trophy-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: trophyFloat 3s ease-in-out infinite;
+  color: var(--accent-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-icon {
+  font-size: 1.4rem;
+  color: var(--accent-primary);
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-card-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+

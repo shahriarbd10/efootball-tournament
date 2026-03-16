@@ -2,14 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { IoLockClosed, IoMail, IoKey, IoLogIn } from 'react-icons/io5';
 
 export default function AdminLoginPage() {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Check if already logged in
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('admin_token');
     if (token) {
@@ -27,7 +28,7 @@ export default function AdminLoginPage() {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
@@ -36,7 +37,7 @@ export default function AdminLoginPage() {
         localStorage.setItem('admin_token', data.token);
         router.push('/admin/dashboard');
       } else {
-        setError('Invalid password. Please try again.');
+        setError('Invalid email or password. Please try again.');
       }
     } catch (err) {
       setError('Connection error. Please try again.');
@@ -48,15 +49,28 @@ export default function AdminLoginPage() {
   return (
     <div className="admin-login-container">
       <div className="admin-login-card">
-        <div className="admin-login-icon">🔐</div>
+        <div className="admin-login-icon"><IoLockClosed /></div>
         <h1 className="admin-login-title">Admin Access</h1>
         <p className="admin-login-subtitle">
-          Enter the tournament admin password to manage matches and scores
+          Enter your credentials to manage the tournament
         </p>
 
         <form onSubmit={handleLogin}>
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <label className="form-label"><IoMail style={{ verticalAlign: 'middle', marginRight: '0.3rem' }} /> Email</label>
+            <input
+              type="email"
+              className="form-input"
+              placeholder="admin@efootball.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label"><IoKey style={{ verticalAlign: 'middle', marginRight: '0.3rem' }} /> Password</label>
             <input
               type="password"
               className="form-input"
@@ -64,7 +78,6 @@ export default function AdminLoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              autoFocus
             />
           </div>
 
@@ -76,12 +89,12 @@ export default function AdminLoginPage() {
               fontFamily: 'Rajdhani, sans-serif',
               fontWeight: '600',
             }}>
-              ❌ {error}
+              {error}
             </div>
           )}
 
           <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={loading}>
-            {loading ? '⏳ Logging in...' : '🔓 Login'}
+            <IoLogIn /> {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
       </div>
