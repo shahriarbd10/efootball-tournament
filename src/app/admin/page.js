@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { IoLockClosed, IoMail, IoKey, IoLogIn } from 'react-icons/io5';
 
@@ -11,13 +11,12 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  if (typeof window !== 'undefined') {
+  useEffect(() => {
     const token = localStorage.getItem('admin_token');
     if (token) {
       router.push('/admin/dashboard');
-      return null;
     }
-  }
+  }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

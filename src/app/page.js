@@ -142,7 +142,7 @@ export default function Home() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                 <span className="badge badge-group-a">Group A</span>
               </div>
-              {['Sadique', 'Nehal', 'Mynul'].map((player, i) => (
+              {['Mynul', 'Rifat', 'Sadique'].map((player, i) => (
                 <div key={player} style={{
                   display: 'flex', alignItems: 'center', gap: '0.75rem',
                   padding: '0.6rem 0',
@@ -160,7 +160,7 @@ export default function Home() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                 <span className="badge badge-group-b">Group B</span>
               </div>
-              {['Arif', 'Shahriar', 'Rifat'].map((player, i) => (
+              {['Arif', 'Shahriar', 'Nehal'].map((player, i) => (
                 <div key={player} style={{
                   display: 'flex', alignItems: 'center', gap: '0.75rem',
                   padding: '0.6rem 0',
