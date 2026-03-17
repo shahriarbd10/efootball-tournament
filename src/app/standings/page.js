@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { IoStatsChart, IoCheckmarkCircle, IoShield, IoTrendingUp } from 'react-icons/io5';
 
-export default function StandingsPage() {
+function StandingsPageContent() {
   const [standings, setStandings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tournament, setTournament] = useState(null);
@@ -164,5 +164,20 @@ export default function StandingsPage() {
         <div className="error-message">No standings data available</div>
       )}
     </div>
+  );
+}
+
+export default function StandingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="container">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <div className="loading-text">Loading Standings...</div>
+        </div>
+      </div>
+    }>
+      <StandingsPageContent />
+    </Suspense>
   );
 }

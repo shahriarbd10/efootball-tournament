@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { IoCalendar, IoTime, IoEllipse, IoCheckmarkCircle, IoHourglass, IoFlame, IoTrophy, IoFunnel } from 'react-icons/io5';
 
-export default function FixturesPage() {
+function FixturesPageContent() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
@@ -186,5 +186,20 @@ export default function FixturesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function FixturesPage() {
+  return (
+    <Suspense fallback={
+      <div className="container">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <div className="loading-text">Loading Fixtures...</div>
+        </div>
+      </div>
+    }>
+      <FixturesPageContent />
+    </Suspense>
   );
 }

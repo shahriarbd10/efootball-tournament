@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { IoFootball, IoHome, IoCalendar, IoStatsChart, IoTrophy, IoSettings, IoMenu, IoClose, IoPerson } from 'react-icons/io5';
@@ -29,7 +30,11 @@ export default function Navbar() {
           <span className="navbar-brand-text">eFootball Cup</span>
         </Link>
 
-        {!isAdminPage && <TournamentSelector />}
+        {!isAdminPage && (
+          <Suspense fallback={<div className="selector-skeleton" style={{ width: '180px', height: '36px' }}></div>}>
+            <TournamentSelector />
+          </Suspense>
+        )}
       </div>
 
       <button

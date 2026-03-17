@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from "next/link";
 import { IoCalendar, IoStatsChart, IoTrophy, IoSettings, IoFootball, IoPeople, IoTime, IoFlash, IoRibbon, IoHandLeft, IoCloseCircle, IoChevronForward, IoGrid } from 'react-icons/io5';
 
-export default function Home() {
+function HomeContent() {
   const [tournament, setTournament] = useState(null);
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -312,5 +312,20 @@ export default function Home() {
         )}
       </div>
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="container">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <div className="loading-text">Loading Tournament...</div>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }

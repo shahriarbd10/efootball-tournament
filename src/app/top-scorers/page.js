@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { IoStatsChart, IoFootball, IoPerson, IoTrophy, IoRibbon } from 'react-icons/io5';
 
-export default function TopScorersPage() {
+function TopScorersPageContent() {
   const [scorers, setScorers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tournamentName, setTournamentName] = useState('');
@@ -192,5 +192,20 @@ export default function TopScorersPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function TopScorersPage() {
+  return (
+    <Suspense fallback={
+      <div className="container">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <div className="loading-text">Loading Top Scorers...</div>
+        </div>
+      </div>
+    }>
+      <TopScorersPageContent />
+    </Suspense>
   );
 }

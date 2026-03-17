@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { IoTrophy, IoTime, IoCheckmarkCircle, IoHourglass, IoEllipse, IoArrowForward, IoFlame, IoStar } from 'react-icons/io5';
 
-export default function BracketPage() {
+function BracketPageContent() {
   const [knockoutMatches, setKnockoutMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tournament, setTournament] = useState(null);
@@ -189,5 +189,20 @@ export default function BracketPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function BracketPage() {
+  return (
+    <Suspense fallback={
+      <div className="container">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <div className="loading-text">Loading Bracket...</div>
+        </div>
+      </div>
+    }>
+      <BracketPageContent />
+    </Suspense>
   );
 }
