@@ -116,6 +116,12 @@ body::before {
   padding: 0 2rem;
 }
 
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
 .navbar-brand {
   display: flex;
   align-items: center;

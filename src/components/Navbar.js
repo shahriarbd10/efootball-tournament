@@ -3,26 +3,34 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { IoFootball, IoHome, IoCalendar, IoStatsChart, IoTrophy, IoSettings, IoMenu, IoClose } from 'react-icons/io5';
+import { IoFootball, IoHome, IoCalendar, IoStatsChart, IoTrophy, IoSettings, IoMenu, IoClose, IoPerson } from 'react-icons/io5';
+import TournamentSelector from './TournamentSelector';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const isAdminPage = pathname.startsWith('/admin');
 
   const links = [
     { href: '/', label: 'Home', icon: <IoHome /> },
+    { href: '/tournaments', label: 'Archive', icon: <IoCalendar /> },
     { href: '/fixtures', label: 'Fixtures', icon: <IoCalendar /> },
     { href: '/standings', label: 'Standings', icon: <IoStatsChart /> },
     { href: '/bracket', label: 'Bracket', icon: <IoTrophy /> },
+    { href: '/top-scorers', label: 'Scorers', icon: <IoPerson /> },
     { href: '/admin', label: 'Admin', icon: <IoSettings /> },
   ];
 
   return (
     <nav className="navbar">
-      <Link href="/" className="navbar-brand">
-        <IoFootball className="navbar-brand-icon" />
-        <span className="navbar-brand-text">eFootball Cup</span>
-      </Link>
+      <div className="nav-left">
+        <Link href="/" className="navbar-brand">
+          <IoFootball className="navbar-brand-icon" />
+          <span className="navbar-brand-text">eFootball Cup</span>
+        </Link>
+
+        {!isAdminPage && <TournamentSelector />}
+      </div>
 
       <button
         className="nav-mobile-toggle"

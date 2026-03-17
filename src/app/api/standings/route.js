@@ -2,17 +2,31 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Match from '@/models/Match';
 
-export async function GET() {
+export async function GET(request) {
   try {
     await dbConnect();
-    const matches = await Match.find({ stage: 'group', status: 'completed' });
+    const { searchParams } = new URL(request.url);
+    const tournamentId = searchParams.get('tournamentId');
 
-    const groups = { A: {}, B: {} };
+    const filter = { stage: 'group' };
+    if (tournamentId) filter.tournamentId = tournamentId;
 
-    // Initialize players
-    const allGroupMatches = await Match.find({ stage: 'group' });
+    // Get all group matches (including non-completed for player init)
+    const allGroupMatches = await Match.find(filter);
+
+    // Get only completed for standings calculation
+    const completedMatches = allGroupMatches.filter(m => m.status === 'completed');
+
+    // Auto-detect groups from matches
+    const groupNames = [...new Set(allGroupMatches.map(m => m.group).filter(Boolean))].sort();
+
+    const groups = {};
+    groupNames.forEach(g => { groups[g] = {}; });
+
+    // Initialize players from all group matches
     allGroupMatches.forEach(m => {
       const g = m.group;
+      if (!g || !groups[g]) return;
       if (!groups[g][m.player1]) {
         groups[g][m.player1] = { player: m.player1, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, gd: 0, points: 0 };
       }
@@ -22,10 +36,13 @@ export async function GET() {
     });
 
     // Calculate standings from completed matches
-    matches.forEach(m => {
+    completedMatches.forEach(m => {
       const g = m.group;
+      if (!g || !groups[g]) return;
       const p1 = groups[g][m.player1];
       const p2 = groups[g][m.player2];
+
+      if (!p1 || !p2) return;
 
       p1.played++;
       p2.played++;
@@ -62,13 +79,12 @@ export async function GET() {
       });
     };
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        A: sortStandings(groups.A),
-        B: sortStandings(groups.B),
-      }
+    const result = {};
+    groupNames.forEach(g => {
+      result[g] = sortStandings(groups[g]);
     });
+
+    return NextResponse.json({ success: true, data: result });
   } catch (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

@@ -2,16 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { IoSettings, IoLogOut, IoSave, IoRefresh, IoTime, IoFlame, IoTrophy, IoWarning, IoPeople, IoSwapHorizontal, IoFootball } from 'react-icons/io5';
+import Link from 'next/link';
+import { IoSettings, IoLogOut, IoAdd, IoCalendar, IoPeople, IoTrophy, IoTrash, IoChevronForward, IoFootball, IoFlash, IoCheckmarkCircle, IoTime } from 'react-icons/io5';
 
 export default function AdminDashboard() {
-  const [matches, setMatches] = useState([]);
+  const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
-  const [seeding, setSeeding] = useState(false);
-  const [groupA, setGroupA] = useState([]);
-  const [groupB, setGroupB] = useState([]);
-  const [savingGroups, setSavingGroups] = useState(false);
+  const [deleting, setDeleting] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -20,34 +19,20 @@ export default function AdminDashboard() {
       router.push('/admin');
       return;
     }
-    fetchMatches();
-    fetchGroups();
+    fetchTournaments();
   }, []);
 
-  const fetchMatches = async () => {
+  const fetchTournaments = async () => {
     try {
-      const res = await fetch('/api/matches');
+      const res = await fetch('/api/tournaments');
       const data = await res.json();
       if (data.success) {
-        setMatches(data.data);
+        setTournaments(data.data);
       }
     } catch (error) {
-      console.error('Failed to fetch matches:', error);
+      console.error('Failed to fetch tournaments:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchGroups = async () => {
-    try {
-      const res = await fetch('/api/groups');
-      const data = await res.json();
-      if (data.success) {
-        setGroupA(data.data.A);
-        setGroupB(data.data.B);
-      }
-    } catch (error) {
-      console.error('Failed to fetch groups:', error);
     }
   };
 
@@ -59,76 +44,33 @@ export default function AdminDashboard() {
     }, 3000);
   };
 
-  const handleScoreChange = (matchNumber, field, value) => {
-    setMatches(prev =>
-      prev.map(m =>
-        m.matchNumber === matchNumber
-          ? { ...m, [field]: parseInt(value) || 0 }
-          : m
-      )
-    );
+  const openDeleteModal = (tournamentId, name) => {
+    setDeleteModal({ tournamentId, name });
   };
 
-  const handleStatusChange = (matchNumber, status) => {
-    setMatches(prev =>
-      prev.map(m =>
-        m.matchNumber === matchNumber ? { ...m, status } : m
-      )
-    );
+  const closeDeleteModal = () => {
+    if (deleting) return;
+    setDeleteModal(null);
   };
 
-  const handlePlayerChange = (matchNumber, field, value) => {
-    setMatches(prev =>
-      prev.map(m =>
-        m.matchNumber === matchNumber ? { ...m, [field]: value } : m
-      )
-    );
-  };
-
-  const saveMatch = async (match) => {
+  const handleDelete = async () => {
+    if (!deleteModal) return;
+    const { tournamentId } = deleteModal;
+    setDeleting(tournamentId);
     try {
-      const res = await fetch('/api/matches', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          matchNumber: match.matchNumber,
-          score1: match.score1,
-          score2: match.score2,
-          status: match.status,
-          player1: match.player1,
-          player2: match.player2,
-        }),
-      });
-
+      const res = await fetch(`/api/tournaments/${tournamentId}`, { method: 'DELETE' });
       const data = await res.json();
-
       if (data.success) {
-        showToast(`Match ${match.matchNumber} updated successfully!`);
+        showToast('Tournament deleted');
+        setTournaments(prev => prev.filter(t => t._id !== tournamentId));
       } else {
-        showToast(`Failed to update match ${match.matchNumber}`, 'error');
+        showToast('Failed to delete', 'error');
       }
-    } catch (error) {
-      showToast('Connection error', 'error');
-    }
-  };
-
-  const handleSeed = async () => {
-    setSeeding(true);
-    try {
-      const res = await fetch('/api/seed', { method: 'POST' });
-      const data = await res.json();
-
-      if (data.success) {
-        showToast('Tournament data seeded successfully!');
-        fetchMatches();
-        fetchGroups();
-      } else {
-        showToast('Failed to seed data', 'error');
-      }
-    } catch (error) {
+    } catch {
       showToast('Connection error', 'error');
     } finally {
-      setSeeding(false);
+      setDeleting(null);
+      setDeleteModal(null);
     }
   };
 
@@ -137,70 +79,21 @@ export default function AdminDashboard() {
     router.push('/admin');
   };
 
-  // --- Group Management ---
-  const swapPlayer = (playerName, fromGroup) => {
-    if (fromGroup === 'A') {
-      if (groupB.length >= 3) {
-        showToast('Group B already has 3 players. Swap one out first.', 'error');
-        return;
-      }
-      setGroupA(prev => prev.filter(p => p !== playerName));
-      setGroupB(prev => [...prev, playerName]);
-    } else {
-      if (groupA.length >= 3) {
-        showToast('Group A already has 3 players. Swap one out first.', 'error');
-        return;
-      }
-      setGroupB(prev => prev.filter(p => p !== playerName));
-      setGroupA(prev => [...prev, playerName]);
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'active':
+        return <span className="badge badge-live"><IoFlash style={{ fontSize: '10px' }} /> Active</span>;
+      case 'completed':
+        return <span className="badge badge-completed"><IoCheckmarkCircle style={{ fontSize: '10px' }} /> Completed</span>;
+      default:
+        return <span className="badge badge-upcoming"><IoTime style={{ fontSize: '10px' }} /> Draft</span>;
     }
   };
 
-  const handleGroupPlayerNameChange = (group, index, newName) => {
-    if (group === 'A') {
-      setGroupA(prev => prev.map((p, i) => i === index ? newName : p));
-    } else {
-      setGroupB(prev => prev.map((p, i) => i === index ? newName : p));
-    }
-  };
-
-  const saveGroups = async () => {
-    if (groupA.length !== 3 || groupB.length !== 3) {
-      showToast('Each group must have exactly 3 players', 'error');
-      return;
-    }
-
-    setSavingGroups(true);
-    try {
-      const res = await fetch('/api/groups', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groupA, groupB }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        showToast('Groups updated & fixtures regenerated!');
-        fetchMatches();
-      } else {
-        showToast(data.error || 'Failed to update groups', 'error');
-      }
-    } catch (error) {
-      showToast('Connection error', 'error');
-    } finally {
-      setSavingGroups(false);
-    }
-  };
-
-  const getStageBadge = (match) => {
-    if (match.stage === 'group') {
-      return match.group === 'A'
-        ? <span className="badge badge-group-a">Group A</span>
-        : <span className="badge badge-group-b">Group B</span>;
-    }
-    if (match.stage === 'semifinal') return <span className="badge badge-knockout"><IoFlame style={{ fontSize: '10px' }} /> Semifinal</span>;
-    return <span className="badge badge-knockout"><IoTrophy style={{ fontSize: '10px' }} /> Final</span>;
+  const formatDate = (dateStr) => {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+    });
   };
 
   if (loading) {
@@ -219,205 +112,162 @@ export default function AdminDashboard() {
       <div className="page-header">
         <h1 className="page-title"><IoSettings style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />Admin Dashboard</h1>
         <p className="page-subtitle">
-          Manage groups, match scores, status, and player names
+          Create and manage tournaments
         </p>
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '0.75rem' }}>
+          <Link href="/admin/tournament/create" className="btn btn-primary btn-sm">
+            <IoAdd /> Create Tournament
+          </Link>
           <button onClick={handleLogout} className="btn btn-secondary btn-sm">
             <IoLogOut /> Logout
           </button>
         </div>
       </div>
 
-      {/* Seed Section */}
-      <div className="seed-section">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <IoWarning style={{ color: 'var(--accent-warning)', fontSize: '1.1rem' }} />
-          <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Seed/reset tournament data with default groups. This will delete existing data.</span>
-        </div>
-        <button
-          onClick={handleSeed}
-          className="btn btn-danger"
-          disabled={seeding}
-        >
-          <IoRefresh /> {seeding ? 'Seeding...' : 'Seed Tournament Data'}
-        </button>
-      </div>
-
-      {/* ===== GROUP MANAGEMENT ===== */}
-      {(groupA.length > 0 || groupB.length > 0) && (
-        <div style={{ marginBottom: '2rem' }}>
-          <div className="section-header">
-            <span className="section-icon"><IoPeople /></span>
-            <span className="section-title">Group Management</span>
-            <div className="section-divider"></div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-            {/* Group A */}
-            <div className="admin-match-card" style={{ borderTop: '3px solid var(--accent-secondary)' }}>
-              <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                <span className="badge badge-group-a" style={{ fontSize: '0.8rem', padding: '0.3rem 1rem' }}>Group A</span>
-              </div>
-              {groupA.map((player, i) => (
-                <div key={`a-${i}`} style={{
-                  display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  padding: '0.5rem 0',
-                  borderBottom: i < groupA.length - 1 ? '1px solid var(--border-color)' : 'none'
-                }}>
-                  <IoFootball style={{ color: 'var(--accent-secondary)', fontSize: '0.9rem', flexShrink: 0 }} />
-                  <input
-                    type="text"
-                    className="form-input"
-                    style={{ flex: 1, fontFamily: 'Rajdhani, sans-serif', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.95rem', padding: '0.4rem 0.6rem' }}
-                    value={player}
-                    onChange={(e) => handleGroupPlayerNameChange('A', i, e.target.value)}
-                  />
-                  <button
-                    className="btn btn-secondary btn-sm"
-                    style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
-                    onClick={() => swapPlayer(player, 'A')}
-                    title="Move to Group B"
-                  >
-                    <IoSwapHorizontal /> → B
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {/* Group B */}
-            <div className="admin-match-card" style={{ borderTop: '3px solid var(--accent-tertiary)' }}>
-              <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                <span className="badge badge-group-b" style={{ fontSize: '0.8rem', padding: '0.3rem 1rem' }}>Group B</span>
-              </div>
-              {groupB.map((player, i) => (
-                <div key={`b-${i}`} style={{
-                  display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  padding: '0.5rem 0',
-                  borderBottom: i < groupB.length - 1 ? '1px solid var(--border-color)' : 'none'
-                }}>
-                  <IoFootball style={{ color: 'var(--accent-tertiary)', fontSize: '0.9rem', flexShrink: 0 }} />
-                  <input
-                    type="text"
-                    className="form-input"
-                    style={{ flex: 1, fontFamily: 'Rajdhani, sans-serif', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.95rem', padding: '0.4rem 0.6rem' }}
-                    value={player}
-                    onChange={(e) => handleGroupPlayerNameChange('B', i, e.target.value)}
-                  />
-                  <button
-                    className="btn btn-secondary btn-sm"
-                    style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
-                    onClick={() => swapPlayer(player, 'B')}
-                    title="Move to Group A"
-                  >
-                    <IoSwapHorizontal /> → A
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
+      {/* Tournament List */}
+      {tournaments.length === 0 ? (
+        <div className="loading-container" style={{ minHeight: '300px' }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.75rem', fontFamily: 'Rajdhani, sans-serif', fontWeight: '500' }}>
-              Saving will reset all matches & scores with the new group assignments
-            </div>
-            <button
-              onClick={saveGroups}
-              className="btn btn-primary"
-              disabled={savingGroups || groupA.length !== 3 || groupB.length !== 3}
-            >
-              <IoSave /> {savingGroups ? 'Saving...' : 'Save Groups & Regenerate Fixtures'}
-            </button>
+            <IoTrophy style={{ fontSize: '3rem', color: 'var(--accent-primary)', marginBottom: '1rem', opacity: 0.5 }} />
+            <div className="loading-text">No tournaments yet</div>
+            <p style={{ color: 'var(--text-muted)', fontFamily: 'Rajdhani, sans-serif', marginTop: '0.5rem' }}>
+              Click "Create Tournament" to get started
+            </p>
           </div>
+        </div>
+      ) : (
+        <div className="admin-match-list">
+          {tournaments.map((t) => (
+            <div key={t._id} className="admin-match-card" style={{ cursor: 'pointer', transition: 'all 0.2s' }}>
+              <div className="admin-match-header" style={{ borderBottom: 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+                  <div style={{
+                    width: '42px', height: '42px', borderRadius: '12px',
+                    background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '1.2rem', flexShrink: 0
+                  }}>
+                    <IoTrophy />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif', fontWeight: '700',
+                      fontSize: '1.1rem', color: 'var(--text-primary)',
+                      textTransform: 'uppercase', letterSpacing: '0.5px',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                    }}>
+                      {t.name}
+                    </div>
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '0.75rem',
+                      fontSize: '0.8rem', color: 'var(--text-muted)',
+                      fontFamily: 'Rajdhani, sans-serif', fontWeight: '500', marginTop: '0.15rem'
+                    }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <IoCalendar style={{ fontSize: '0.7rem' }} /> {formatDate(t.date)}
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <IoPeople style={{ fontSize: '0.7rem' }} /> {t.playerCount} players
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <IoFootball style={{ fontSize: '0.7rem' }} /> {t.format === 'group+knockout' ? 'Group + KO' : 'Knockout'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {getStatusBadge(t.status)}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem 1rem 0.75rem', borderTop: '1px solid var(--border-color)', marginTop: '0.25rem' }}>
+                <Link
+                  href={`/admin/tournament/${t._id}`}
+                  className="btn btn-primary btn-sm"
+                  style={{ flex: 1, justifyContent: 'center' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <IoSettings /> Manage <IoChevronForward />
+                </Link>
+                <button
+                  onClick={(e) => { e.stopPropagation(); openDeleteModal(t._id, t.name); }}
+                  className="btn btn-danger btn-sm"
+                  disabled={deleting === t._id}
+                  style={{ padding: '0.4rem 0.75rem' }}
+                >
+                  <IoTrash /> {deleting === t._id ? '...' : ''}
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* ===== MATCH EDITOR ===== */}
-      <div className="section-header" style={{ marginTop: '1rem' }}>
-        <span className="section-icon"><IoTrophy /></span>
-        <span className="section-title">Match Editor</span>
-        <div className="section-divider"></div>
-      </div>
-
-      <div className="admin-match-list">
-        {matches.map((match) => (
-          <div key={match._id} className="admin-match-card">
-            <div className="admin-match-header">
-              <div className="admin-match-info">
-                <span className="match-number">Match {match.matchNumber}</span>
-                {getStageBadge(match)}
-              </div>
-              <span className="match-time" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <IoTime style={{ fontSize: '0.75rem' }} /> {match.timeSlot}
-              </span>
+      {deleteModal && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+          <div className="modal-card">
+            <div id="delete-modal-title" className="modal-title danger">Delete Tournament</div>
+            <div className="modal-message">
+              Delete tournament "{deleteModal.name}"? This will remove all matches too.
             </div>
-
-            <div className="admin-match-body">
-              <div className="admin-player-section">
-                <input
-                  type="text"
-                  className="form-input"
-                  style={{ maxWidth: '140px', textAlign: 'center', fontFamily: 'Rajdhani, sans-serif', fontWeight: '700', textTransform: 'uppercase' }}
-                  value={match.player1}
-                  onChange={(e) => handlePlayerChange(match.matchNumber, 'player1', e.target.value)}
-                />
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="number"
-                  className="form-input form-input-score"
-                  min="0"
-                  value={match.score1}
-                  onChange={(e) => handleScoreChange(match.matchNumber, 'score1', e.target.value)}
-                />
-                <span className="admin-vs">VS</span>
-                <input
-                  type="number"
-                  className="form-input form-input-score"
-                  min="0"
-                  value={match.score2}
-                  onChange={(e) => handleScoreChange(match.matchNumber, 'score2', e.target.value)}
-                />
-              </div>
-
-              <div className="admin-player-section">
-                <input
-                  type="text"
-                  className="form-input"
-                  style={{ maxWidth: '140px', textAlign: 'center', fontFamily: 'Rajdhani, sans-serif', fontWeight: '700', textTransform: 'uppercase' }}
-                  value={match.player2}
-                  onChange={(e) => handlePlayerChange(match.matchNumber, 'player2', e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="admin-match-actions">
-              <select
-                className="form-input admin-status-select"
-                value={match.status}
-                onChange={(e) => handleStatusChange(match.matchNumber, e.target.value)}
-              >
-                <option value="upcoming">Upcoming</option>
-                <option value="live">Live</option>
-                <option value="completed">Completed</option>
-              </select>
-
-              <button
-                onClick={() => saveMatch(match)}
-                className="btn btn-primary btn-sm"
-              >
-                <IoSave /> Save
+            <div className="modal-actions">
+              <button className="btn btn-secondary btn-sm" onClick={closeDeleteModal} disabled={Boolean(deleting)}>
+                Cancel
+              </button>
+              <button className="btn btn-danger btn-sm" onClick={handleDelete} disabled={Boolean(deleting)}>
+                {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
-        ))}
-      </div>
-
-      {matches.length === 0 && (
-        <div className="loading-container" style={{ minHeight: '200px' }}>
-          <div className="loading-text">No matches found. Click &quot;Seed Tournament Data&quot; to populate.</div>
         </div>
       )}
+
+      <style jsx>{`
+        .modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.65);
+          backdrop-filter: blur(4px);
+          z-index: 2100;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1rem;
+        }
+        .modal-card {
+          width: 100%;
+          max-width: 420px;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
+          border-radius: 14px;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+          padding: 1.2rem;
+        }
+        .modal-title {
+          font-family: 'Orbitron', sans-serif;
+          font-size: 0.95rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 0.6rem;
+          color: var(--text-primary);
+        }
+        .modal-title.danger {
+          color: var(--accent-danger);
+        }
+        .modal-message {
+          color: var(--text-secondary);
+          font-family: 'Rajdhani', sans-serif;
+          font-size: 0.95rem;
+          line-height: 1.5;
+          margin-bottom: 1rem;
+        }
+        .modal-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 0.6rem;
+        }
+      `}</style>
 
       {/* Toasts */}
       {toasts.map((toast) => (

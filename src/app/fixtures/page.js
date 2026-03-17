@@ -1,39 +1,63 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { IoCalendar, IoTime, IoEllipse, IoCheckmarkCircle, IoHourglass, IoFlame, IoTrophy, IoFunnel } from 'react-icons/io5';
 
 export default function FixturesPage() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
+  const [tournament, setTournament] = useState(null);
+  const searchParams = useSearchParams();
+  const tId = searchParams.get('t');
 
-  const fetchMatches = async () => {
+  const fetchData = async () => {
     try {
-      const res = await fetch('/api/matches');
-      const data = await res.json();
-      if (data.success) {
-        setMatches(data.data);
+      let activeId = tId;
+      
+      if (!activeId) {
+        const tAllRes = await fetch('/api/tournaments');
+        const tAllData = await tAllRes.json();
+        if (tAllData.success && tAllData.data.length > 0) {
+          const latest = tAllData.data.find(t => t.status === 'active') || tAllData.data[0];
+          activeId = latest._id;
+        }
+      }
+
+      if (activeId) {
+        const ts = Date.now();
+        const [tRes, mRes] = await Promise.all([
+          fetch(`/api/tournaments/${activeId}?t=${ts}`),
+          fetch(`/api/matches?tournamentId=${activeId}&t=${ts}`)
+        ]);
+        const tData = await tRes.json();
+        const mData = await mRes.json();
+        
+        if (tData.success) setTournament(tData.data);
+        if (mData.success) setMatches(mData.data);
       }
     } catch (error) {
-      console.error('Failed to fetch matches:', error);
+      console.error('Failed to fetch:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchMatches();
-    const interval = setInterval(fetchMatches, 10000);
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [tId]);
+
+  // Extract group names dynamically
+  const groupNames = [...new Set(matches.filter(m => m.stage === 'group').map(m => m.group).filter(Boolean))].sort();
+  const hasKnockout = matches.some(m => m.stage !== 'group');
 
   const filteredMatches = matches.filter(m => {
     if (activeTab === 'all') return true;
-    if (activeTab === 'groupA') return m.stage === 'group' && m.group === 'A';
-    if (activeTab === 'groupB') return m.stage === 'group' && m.group === 'B';
     if (activeTab === 'knockout') return m.stage !== 'group';
-    return true;
+    return m.stage === 'group' && m.group === activeTab;
   });
 
   const getStatusBadge = (status) => {
@@ -49,12 +73,16 @@ export default function FixturesPage() {
 
   const getStageBadge = (match) => {
     if (match.stage === 'group') {
-      return match.group === 'A'
-        ? <span className="badge badge-group-a">Group A</span>
-        : <span className="badge badge-group-b">Group B</span>;
+      const colors = { A: 'badge-group-a', B: 'badge-group-b' };
+      return <span className={`badge ${colors[match.group] || 'badge-group-a'}`}>Group {match.group}</span>;
     }
-    if (match.stage === 'semifinal') return <span className="badge badge-knockout"><IoFlame style={{ fontSize: '10px' }} /> Semifinal</span>;
-    return <span className="badge badge-knockout"><IoTrophy style={{ fontSize: '10px' }} /> Final</span>;
+    const labels = { round16: 'R16', quarterfinal: 'QF', semifinal: 'Semifinal', final: 'Final' };
+    return (
+      <span className="badge badge-knockout">
+        {match.stage === 'final' ? <IoTrophy style={{ fontSize: '10px' }} /> : <IoFlame style={{ fontSize: '10px' }} />}
+        {' '}{labels[match.stage] || match.stage}
+      </span>
+    );
   };
 
   const getScoreClass = (match, playerNum) => {
@@ -83,7 +111,7 @@ export default function FixturesPage() {
       <div className="page-header">
         <h1 className="page-title"><IoCalendar style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />Match Fixtures</h1>
         <p className="page-subtitle">
-          All 9 tournament matches — auto-refreshing every 10 seconds
+          {tournament?.name || 'Tournament'} — {matches.length} matches — auto-refreshing every 10s
         </p>
         {hasLive && (
           <div className="live-indicator" style={{ justifyContent: 'center', marginTop: '0.75rem' }}>
@@ -97,15 +125,16 @@ export default function FixturesPage() {
         <button className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>
           <IoFunnel style={{ fontSize: '0.8rem' }} /> All Matches
         </button>
-        <button className={`tab-btn ${activeTab === 'groupA' ? 'active' : ''}`} onClick={() => setActiveTab('groupA')}>
-          Group A
-        </button>
-        <button className={`tab-btn ${activeTab === 'groupB' ? 'active' : ''}`} onClick={() => setActiveTab('groupB')}>
-          Group B
-        </button>
-        <button className={`tab-btn ${activeTab === 'knockout' ? 'active' : ''}`} onClick={() => setActiveTab('knockout')}>
-          <IoFlame style={{ fontSize: '0.8rem' }} /> Knockout
-        </button>
+        {groupNames.map(g => (
+          <button key={g} className={`tab-btn ${activeTab === g ? 'active' : ''}`} onClick={() => setActiveTab(g)}>
+            Group {g}
+          </button>
+        ))}
+        {hasKnockout && (
+          <button className={`tab-btn ${activeTab === 'knockout' ? 'active' : ''}`} onClick={() => setActiveTab('knockout')}>
+            <IoFlame style={{ fontSize: '0.8rem' }} /> Knockout
+          </button>
+        )}
       </div>
 
       <div className="matches-grid">
@@ -114,7 +143,7 @@ export default function FixturesPage() {
             style={match.status === 'live' ? { borderColor: 'rgba(239, 68, 68, 0.4)', boxShadow: '0 0 20px rgba(239, 68, 68, 0.15)' } : {}}>
             <div className="match-card-header">
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <span className="match-number">Match {match.matchNumber}</span>
+                <span className="match-number">M{match.matchNumber}</span>
                 {getStageBadge(match)}
               </div>
               <span className="match-time"><IoTime style={{ fontSize: '0.75rem', verticalAlign: 'middle' }} /> {match.timeSlot}</span>
